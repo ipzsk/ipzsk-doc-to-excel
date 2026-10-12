@@ -2,12 +2,40 @@
 
 原生 DSH / DeepSeek Harness Desktop 插件，提供「文档转 Excel」独立面板。无需 Skill 提示词或聊天操作。上传 .docx / .pdf，选择 Harness 已配置模型或纯本地规则，下载分类 Excel。
 
+## 功能定位
+
+- 小文档模式：批量读取 Word/PDF，按本地规则或模型要求分类，输出总览、分类明细、待确认和原始表格。
+- 大 PDF 模式：支持最高 2 GB 的单个 PDF，先试跑 10 页，再按保存的列名和整理要求继续全文。
+- 本地解析与 OCR：正文、表格和无文本页优先在本机处理；macOS 可调用 Vision OCR。
+- 节省 token：去重、摘录预算、批处理、缓存、暂停与恢复，避免把全文、聊天历史和工具列表重复发送给模型。
+- 数据留在当前 DSH Profile，输出 Excel 字段按文本保存，保留前导零和公式样式原文。
+- 当前版本负责提取和生成 Excel，不执行数据库入库；正式入库前需要人工核对字段与原文。
+
+## 与桌面端和插件市场的关系
+
+本仓库独立于 [desktop-ipzsk](https://github.com/ipzsk/desktop-ipzsk) 发布。插件在本机完成文档解析；用户选择模型时，通过 DeepSeek Harness 的模型服务和 [token-ipzsk](https://github.com/ipzsk/token-ipzsk) 产生对应调用与计费记录。
+
+新版本通过本仓库 GitHub Release 发布，再由开发者中心提交审核。上架后，桌面端的 IPZSK 插件市场读取 `/api/me/plugin-market`，下载审核附件并校验包名、版本、大小和 SHA-256。插件数据目录不随安装包替换，桌面端与插件可以分别更新。仓库创建或发布 Release 不会自动上架。
+
+当前版本：[v0.2.1](https://github.com/ipzsk/plugin-dsh-doc-to-excel/releases/tag/v0.2.1)。
+
+## 六个仓库如何协作
+
+| 仓库 | 职责 |
+| --- | --- |
+| [web-ipzsk](https://github.com/ipzsk/web-ipzsk) | 官网、账户、开发者中心和 Web 创作工作台 |
+| [desktop-ipzsk](https://github.com/ipzsk/desktop-ipzsk) | DeepSeek 官方底座、IPZSK 登录和插件市场宿主 |
+| [token-ipzsk](https://github.com/ipzsk/token-ipzsk) | 账户、号池、模型路由、计费和插件审核 |
+| [plugin-dsh-imagegen](https://github.com/ipzsk/plugin-dsh-imagegen) | AI 生图与改图插件 |
+| [plugin-dsh-doc-to-excel](https://github.com/ipzsk/plugin-dsh-doc-to-excel) | 当前仓库，Word/PDF 转分类 Excel 插件 |
+| [plugin-dsh-swf-studio](https://github.com/ipzsk/plugin-dsh-swf-studio) | FloorLED 与 SWF 场景制作插件 |
+
 ## 安装
 
 需要支持 Host `webServer`、`llm` 与 Web Client 插件的 DSH 0.1.2 系列宿主。
 
 ```sh
-dsh plugin --profile desktop add https://github.com/JayceHuang/dsh-doc-to-excel/releases/download/v0.2.1/dsh-doc-to-excel-0.2.1.tgz --ignore-scripts --config.auto-install-peers=false
+dsh plugin --profile desktop add https://github.com/ipzsk/plugin-dsh-doc-to-excel/releases/download/v0.2.1/dsh-doc-to-excel-0.2.1.tgz --ignore-scripts --config.auto-install-peers=false
 ```
 
 使用 Web profile 时把 desktop 改成 web。安装后重新加载 Harness。插件随 bundle patch 加载，侧边栏出现「文档转 Excel」。仅支持本机同源访问。
@@ -90,13 +118,13 @@ Node 测试覆盖本地模式、去重、模型校验失败停止、取消和磁
 验证：`node --test tests/*.test.js`；Python 文档测试同上；显式规模测试 `/path/to/python tests/large_stress.py` 生成约30 MB、4000页的合成文字PDF，核对逐页恢复和Excel原文行数。模型端到端逻辑通过可控模型响应验证，真实业务质量仍需实际PDF样本确认。
 
 
-## GitHub 独立更新（0.2.1 起）
+## GitHub Release 与插件市场更新（0.2.1 起）
 
-仓库：https://github.com/JayceHuang/dsh-doc-to-excel
+仓库：https://github.com/ipzsk/plugin-dsh-doc-to-excel
 
-发布：https://github.com/JayceHuang/dsh-doc-to-excel/releases
+发布：https://github.com/ipzsk/plugin-dsh-doc-to-excel/releases
 
-插件面板顶部点击「检查插件更新」，发现新版本后点击「安装更新」。更新器只读取本仓库的最新正式 Release，只接受固定命名的安装包与 SHA256SUMS；校验成功后调用当前 profile 的 `dsh plugin add`，禁止安装脚本，安装完成核对版本并提示重启。不会发送文档、模型密钥或聊天内容到 GitHub，也不会更新桌面应用本体。
+IPZSK Desktop 用户通过插件市场检查并安装后台审核版本。其他兼容 Harness 可以在插件面板顶部点击「检查插件更新」；更新器只读取本仓库的最新正式 Release，只接受固定命名的安装包与 SHA256SUMS，校验成功后调用当前 profile 的 `dsh plugin add`，禁止安装脚本，安装完成核对版本并提示重启。更新过程不会发送文档、模型密钥或聊天内容到 GitHub，也不会更新桌面应用本体。
 
 自动安装要求客户端 Host 提供当前 profile 目录，且 `dsh` 与 `pnpm` 命令可用。没有该运行环境时，先从 Releases 下载安装包，在客户端终端执行同上安装命令（替换成目标版本链接）。GitHub 网络失败、校验失败会停止；源码开发链接会被明确识别为未成功切换，不能冒充升级成功。
 
@@ -106,6 +134,6 @@ Node 测试覆盖本地模式、去重、模型校验失败停止、取消和磁
 
 ### 维护者发布
 
-修改 package.json 的版本号，执行测试并提交源码；推送相同的版本标签（例如 v0.2.2）。GitHub Actions 会先执行 Node/Python 测试，再创建 Release，上传 tgz 和 SHA256SUMS。客户端只在用户点击检查时请求 GitHub，不后台轮询、不自动升级。新标签对应的新版本发布后，已安装0.2.1及以上版本的客户端即可独立更新。
+修改 package.json 的版本号，执行测试并提交源码；推送相同的版本标签（例如 v0.2.2）。GitHub Actions 会先执行 Node/Python 测试，再创建 Release，上传 tgz 和 SHA256SUMS。创建 Release 后还需在 IPZSK 开发者中心提交审核；审核通过才会出现在插件市场。通用 Harness 客户端只在用户点击检查时请求 GitHub，不后台轮询、不自动升级。
 
 也可用 `pnpm release:pack` 在本地生成 `release/` 下的相同两个文件。构建仅使用 Node 和 pnpm，不需要复制本机配置。仓库和安装包不包含业务样本、Excel 输出、任务数据库、模型账号配置或 .env。
